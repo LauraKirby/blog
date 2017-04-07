@@ -1,0 +1,60 @@
+<pre class="prettyprint lang-scss">
+.message-test {
+ border: 4px solid #ccc;
+ padding: 10px;
+ color: #333;
+}
+
+.success-test {
+ @extend .message-test;
+ border-color: green;
+}
+
+.error-test {
+ @extend .message-test;
+ border-color: red;
+}
+
+.warning-test {
+ @extend .message-test;
+ border-color: yellow;
+}
+
+div.scss-test {
+ .large-text-test {
+   .message-test {
+     color: orange;
+   }
+ }
+}
+</pre>
+
+<h3>Transpiled CSS</h3>
+<p>The css for the "success-test" selector looks good.</p>
+<pre class="prettyprint lang-css">
+/* <p class="success-test">this is a success message to test the scss</p> */
+.message-test, .success-test, .error-test, .warning-test {
+  border: 4px solid #ccc;
+  padding: 10px;
+  color: #333;
+}
+</pre>
+
+<p>The css for the "message-test" selector, additionally, looks good.</p>
+<pre class="prettyprint lang-css">
+/* <p class="message-test">testing the messsage class</p> */
+.message-test, .success-test, .error-test, .warning-test {
+  border: 4px solid #ccc;
+  padding: 10px;
+  color: #333;
+}
+</pre>
+
+<p>Now, look at what happens when we embeded the 'extended' class into a diferent class.</p>
+<pre class="prettyprint lang-css">
+/* <span class="message-test">hello</span> */
+div.scss-test .large-text-test .message-test, div.scss-test .large-text-test .success-test, div.scss-test .large-text-test .error-test, div.scss-test .large-text-test .warning-test {
+  color: orange;
+}
+</pre>
+<p>Where did all of those "large-text-test" selectors come from? It looks like using a class selector, which has been which has been extended, as a selector will generate a bunch of unnecessary selectors. </p>

@@ -1,0 +1,66 @@
+<p>Cool things I learned this week with Rails I18n.&nbsp;</p>
+
+<h3>1. Pass Variables</h3>
+<p>
+  string interpolation (or variable interpolation) - is the process of evaluating a string literal containing one or more placeholders, yielding a result in which the placeholders are replaced with their corresponding values. It is a form of simple template processing[1] or, in formal terms, a form of quasi-quotation (or logic substitution interpretation).
+  String interpolation allows easier and more intuitive string formatting and content-specification compared with string concatenation.
+</p>
+
+<pre class="prettyprint lang-yaml"> # app/views/products/show.html.erb
+<%= t('product_price', price: @product.price) %>
+</pre>
+
+<pre class="prettyprint lang-yaml"># config/locales/en.yml
+en:
+  product_price: "$%{price}"
+</pre>
+
+
+<h3>2. Embeded Keys</h3>
+<p>The I18n gem ships with a feature called variable interpolation&nbsp;that allows you to use variables in translation definitions and pass the values for these variables to the translation method</p>
+
+<p>You can embed any arbitrary YAML variables and access them within your application, simply by writing out how they are related.&nbsp;</p>
+
+<pre class="prettyprint lang-yaml"> #en.yml
+  user:
+    profile:
+      title: “Profile”
+</pre>
+
+<pre class="prettyprint lang-ruby"> #en.yml
+  user:
+    profile:
+      title: “Profile”
+</pre>
+
+<h3>3. Overwrite with Intention</h3>
+<p>
+  Write case specific translations with a default backup. Update the specifc_case.yml and add a fallback to your general_case.yml file.
+</p>
+<h3>4. Formatting</h3>
+<p>
+  While the i18n `t` method will provide an exact translation of the dictionary lookup. The i18n `t` helper method provides addtional functionality such as parsing HTML. By adding `_html` to the end of your file name, you can add stying within your YAML file.
+</p>
+<p>
+  Methods like `number_to_currency` allow you to format and thus abstract all strings and other locale specific bits such as date or currency out of your application.
+</p>
+
+<pre class="prettyprint lang-ruby"> #en.yml
+# app/views/products/show.html.erb
+<%= "#{t('currency')}#{@product.price}" %>
+</pre>
+
+<pre class="prettyprint lang-yaml"> #en.yml
+en:
+  currency: "$"
+</pre>
+
+<pre class="prettyprint lang-yaml"> # es.yml
+es:
+  currency: "€"
+</pre>
+
+<ul>Sources:
+  <li><a href="http://guides.rubyonrails.org/i18n.html">1. Rails Internationalization (I18n) API</a></li>
+  <li><a href="https://en.wikipedia.org/wiki/String_interpolation">2. Wikipedia, String interpolation</a></li>
+</ul>

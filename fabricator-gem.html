@@ -1,0 +1,19 @@
+<p>Assuming you have the <a href="https://www.fabricationgem.org/">Fabricator gem</a>&nbsp;set up in your Rails project.&nbsp;</p>
+
+<p>Accessing external <pre class="prettyprint">fabricators<pre class="prettyprint"> in your <pre class="prettyprint">db/seeds.rb<pre class="prettyprint lang-ruby"> file.&nbsp;</p>
+
+<p><pre class="prettyprint lang-ruby">
+#/db/seeds.rb
+
+Dir[MhtCore::Engine.root.join('spec/fabricators/**/*.rb')].each{|f| require f}
+
+</pre></p>
+
+To clarify the above-listed line of code, I will explian it piece by piece.
+ <br>
+
+<ol>
+  <li><pre class="prettyprint lang-ruby">MhtCore::Engine.root</pre></li>
+  <li><pre class="prettyprint lang-ruby">'spec/fabricators/**/*.rb'</pre></li>
+  <li></li>
+</ol>

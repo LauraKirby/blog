@@ -1,0 +1,53 @@
+<p>In my Rails template view I have a list of items that be updated one at a time.
+I would like to add functionality to update all the items at once with a ‘select all’ option.
+See example of concept below from my Gmail account below.</p>
+
+
+<h3>Goal</h3>
+<p>Option to select “All”.</p>
+
+[image]
+
+<p>All emails on page have been selected.</p>
+[image]
+
+<p>Now, I can click on “Mark as read” to update all emails that have been selected.</p>
+[image]
+
+<p>The issue is that Simple Form assumes that when you update multiple objects at once, that will have a parent object. For example an email may `belong_to` a `user` and a `user` may `has_many` `emails`. In which case you could build a form for `user` and update the `emails` attribute.</p>
+
+<p>In my scenario, we have a model without associations. Meaning, I want to update <pre class="prettyprint lang-ruby">emails</pre> based on the email id without relation to a `user` object.</p>
+
+<p>We were about to achieve this through building some custom html within the Simple Form generator.</p>
+
+<h2>Routing</h2>
+<p>I want post to post data to `/emails/read_all`.</p>
+<b>Create route and corresponding action:</b><br>
+- Add email resource and preferred route.<br>
+- I have implemented 'PUT' since I am doing a partial update.<br>
+<pre class="prettyprint lang-ruby">
+    # /config/routes.rb
+    resources :emails do
+       put :read, on: :member
+       put :read_all, on: :collection
+    end
+</pre>
+<br>
+- Add a nearly empty action to the emails controller.
+<pre class="prettyprint lang-ruby">
+    # /controllers/emails_controller.rb
+    def read_all
+      redirect_to emails_path
+    end
+</pre>
+<br>
+<b>Route within Simple Form:</b>
+<pre class="prettyprint lang-ruby">
+ # /views/email/index.html.erb
+ &lt;%= simple_form_for Email.new, as: :emails, url: read_all_emails_path, method: :put do |f| %&gt;
+</pre>
+<br>
+<b>Verify the request:</b><br>
+- Take a look at your server logs. After clicking “submit” on your form, you should see something like:<br>
+<pre class="prettyprint lang-ruby">`Started PUT "/emails/read_all" for 127.0.0.1 at 2016-12-09 12:12:45 -0800`
+</pre>
