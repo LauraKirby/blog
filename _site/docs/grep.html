@@ -1,0 +1,42 @@
+Narrator: "This is a story of command-line utilities that use golbal regular expressions for searching plain-text data sets. On this fine afternoon, the utilities bump into each other at the dog park."
+
+<!--  GREP -->
+<b>[Mr. Grep sits on the park bench thinking to himself.]</b>
+<b>[Stage left, enter The Silver Searcher]</b>
+
+<p>Mr. Grep: "I’m cool and well tested. I can search entire directories with a short command."</p>
+<p>In the 1960's Ken Thompson made notable contributions to regular expressions that helped established my core functionality and soon to be fame.</p>
+
+<p>Those milienalls can call me 'slow' but I'm well tested and the first of my kind. Plus, I come standard on most operating systems</p>
+
+<pre class="prettyprint lang-bash">$ grep -R "def set_user_name" ./
+</pre>
+
+<!--  SILVER SEARCHER -->
+<b>[Stage left, enter Ms. Ag]</b>
+<p>Ms. Ag: "Hello Mr. Grep, my name is 'The Silver Searcher' but you can call me 'Ag' for short. I have heard so much about you! What an opportunity to see you here today.</p>
+<p>Mr. Grep: "Ag, I'm not sure I have heard of you."</p>
+
+<p>Ms. Ag: "My primary creator is Geoff Greer and I was written in C. My preformance has been enhanced due to tricks like pthreads, memory-mapped IO, Boyer-Moore-Horspool strstr(), and PCRE's JIT."</p>
+<p>Mr. Grep: "Ah, yes, I remember you and your searching algorithms now. You're quite the optimizer."</p>
+<p>Ms. Ag: Do you happen to know if it true that I have additional tools in comparision to Ack?"</p>
+
+<pre class="prettyprint lang-bash">$ brew install the_silver_searcher
+</pre>
+
+<pre class="prettyprint lang-bash">$ ag "def set_user_name"
+</pre>
+
+<!--  SILVER SEARCHER -->
+<b>[Stage right, enter Mx. Git-Grep]</b>
+
+<p>Mx. Git-Grep: "Ms. Ag, I can answer that! Similar to me, your searches don't inculde files that are listed within a gitignore. I imagine individuals using our tools are very happy for this feature! This means we don't spend time searching through massive log files and then print thousands of results. That would be hard for humans to parse. Plus, they are likely looking to modify their source code.</p>
+<p>"Ack and Mr. Grep would need special run-time arguments to produce similar behavior."</p>
+<p>"While I know common files to ignore, I must admint, I am nothing without an initialized git repository. I simiply will not work on my own."</p>
+
+<p>Mr. Grep: "Ms. Ag and Mx. Git-Grep, it has been an pleasure to exchange bytes."
+
+<pre class="prettyprint lang-bash">#Initialize a git repository. Use the familiar “grep” commands prefixed with “git”
+</pre>
+<pre class="prettyprint lang-bash">$ git grep "def set_user_name"
+</pre>
