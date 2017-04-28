@@ -1,0 +1,73 @@
+Mongoid OR query syntax
+
+Environment/Stack:
+  Rails 4
+  MongoDB (database) with Mongoid (Object-Document-Mapper)
+  A Question has_many Answers
+  An Answer belongs_to a question
+
+Goal:
+  Create a mongoid query that will allow us to find all Answers that belong to a Question.
+  We want to include all answers that meet one of two criterias:
+  1. Answers with the 'creator_type' field  set to 'User'
+  2. Answers with the 'creator_id' field set to an id within a array of ids.
+
+  To put it more clearly, it may be helpful to see what we are looking for in Ruby:
+    answers = [answer_1, answer_2, answer_3, answer_4]
+    affiliate_ids = ['58f83a6e', '0d8582e', '7b696b1c']
+    filtered_answers = answers.select { |answer| answer.creator_type == 'User' || affiliate_ids.include?(answer.creator_id == 'User') }
+
+  If we were using a relational database, this would be easy to accomplish using a join. However, since we are using a non-relational database, we have to be more specific about the data we are looking for.
+
+
+Solution:
+  user_answers = answers.any_of(creator_type: 'User').any_of(creator_id: {'$in' => affiliate_ids})
+
+Resulting in:
+  <Mongoid::Criteria
+  selector: {"question_id"=>BSON::ObjectId('58f83a6c0d8582e7b696b17f'), "creator_id"=>{"$ne"=>nil, "$nin"=>[]}, "$or"=>[{"creator_type"=>"User"}, {"creator_id"=>{"$in"=>[BSON::ObjectId('58f83a6d0d8582e7b696b1c0'), BSON::ObjectId('58f83a6e0d8582e7b696b1c9'), BSON::ObjectId('58f83a6f0d8582e7b696b1db')]}}], "created_at"=>{"$gte"=>2017-04-26 23:54:05 UTC}}
+  options:  {:sort=>{"creator_type"=>-1, "created_at"=>1}}
+  class:    Answer
+  embedded: false>
+
+
+  answers.any_of({creator_type: 'User'},{creator_id: {'$in' => affiliate_ids}})
+    <Mongoid::Criteria
+    selector: {"question_id"=>BSON::ObjectId('58f83a6c0d8582e7b696b17f'), "creator_id"=>{"$ne"=>nil, "$nin"=>[]}, "$or"=>[{"creator_type"=>"User"}, {"creator_id"=>{"$in"=>[BSON::ObjectId('58f83a6d0d8582e7b696b1c0'), BSON::ObjectId('58f83a6e0d8582e7b696b1c9'), BSON::ObjectId('58f83a6f0d8582e7b696b1db')]}}]}
+    options:  {:sort=>{"creator_type"=>-1, "created_at"=>1}}
+    class:    Answer
+    embedded: false>
+
+Works!
+It looks like '$in' is required
+answers.or(creator_type: 'User').or(creator_id: {'$in' => affiliate_ids})
+
+MONGODB | localhost:27017 | health_teams_development.count | STARTED | {"count"=>"answers", "query"=>{"question_id"=>BSON::ObjectId('58f83a6c0d8582e7b696b17f'), "creator_id"=>{"$ne"=>nil, "$nin"=>[]}, "$or"=>[{"creator_type"=>"User"}, {"creator_id"=>{"$in"=>[BSON::ObjectId('58f83a6d0d8582e7b696b1c0'), BSON::ObjectId('58f...
+MONGODB | localhost:27017 | health_teams_development.count | SUCCEEDED | 0.0005520000000000001s
+2
+
+{"count"=>"answers", "query"=>{"question_id"=>BSON::ObjectId('58f83a6c0d8582e7b696b17f'), "creator_id"=>{"$ne"=>nil, "$nin"=>[]}, "$or"=>[{"creator_type"=>"User"}, {"creator_id"=>{"$in"=>[BSON::ObjectId('58f83a6d0d8582e7b696b1c0'), BSON::ObjectId('58f...
+
+
+
+    {"$or"=>[{"username"=>@username}, {"email"=>@email}]}
+
+If you are looking to match any one of an array of elements, then you will need to write a Mongoid query with the Mongo '$in' selector.
+
+For example, you have a specific username and an array of emails. You would like to return results for items in which case either returns true for having at least one matching field:
+
+    @emails = ["hi@mail.com", "test@mail.com", "foo@mail.com"]
+    Username.or({username: ""}, {email: {'$in': @emails}})
+    {"$or"=>[{"first_name"=>""}, {"email"=>{:$in=>["hi@mail.com", "test@mail.com", "foo@mail.com"]}}]}
+
+If you have 2 of the 3 emails in your database, then the selector will return a count of 2.
+
+
+
+Now the Mongo selector will resolve to:
+
+@emails = ["adisa@example.com", "anna@example.com", "yuan@example.com"]
+
+answers.or({creator_type: 'User'}, {creator_id: {'$in' => affiliate_ids}})
+
+User.or({first_name: "Adisa"}, {email: "adisa@example.com"})
