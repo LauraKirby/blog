@@ -1,101 +1,124 @@
-
-Mongoid OR query syntax
-
-<h3>Environment/Stack:</h3>
+<p>Mongoid `OR` query syntax and a working through a sample scenario. See completed <a href="https://github.com/LauraKirby/inbox.git">source code</a> for working through this code as you read along.</p>
+<h3>Setup</h3>
 <ul>
   <li>Rails 4</li>
   <li>MongoDB (database) with Mongoid (Object-Document-Mapper)</li>
-  <li>A Question has_many Answers</li>
-  <li>An Answer belongs_to a question</li>
+  <li>We are creating an application support "inbox" for users. We want to show a user all emails they have written or that admin has written them.
+    <li>Model setup:<pre class="prettyprint lang-ruby"># A User 'has_many' Emails
+# A User has 'emails' and 'name' fields
+# An Email 'belongs_to' a User
+# An Email has a 'address', 'author_type', and 'user_id' fields</pre>
+    </li>
+  </li>
 </ul>
 
-
 <h3>Goal:</h3>
-<p>Create a mongoid query that will create a mongo a selector for all answers that meet one of two criterias:</p>
+<p>Create a Mongoid query that will create a Mongo a selector for all emails that meet one of two criterias:</p>
   <ol>
-    <li>Answers with the 'creator_type' field  set to 'Admin'</li>
-    <li>Answers with the 'user_id' field set to an id within a array of ids.</li>
+    <li>Emails with the <code>'author_type'</code> field  set to "admin"</li>
+    <li>Emails with the <code>'user_id'</code> field set to an id within a given array.</li>
   </ol>
-
-<p>In Ruby, the query would like like this:</p>
+<code></code>
+<p>In Ruby, the setup and selectors may look like this:</p>
 <pre class="prettyprint lang-ruby">
-    answers = [answer_1, answer_2, answer_3, answer_4, answer_5]
-    user_ids = ['58f83a6e', '0d8582e', '7b696b1c']
-    answers.select { |answer| answer.creator_type == 'Admin' || user_ids.include?(answer.user_id) }
+emails = [email_1, email_2, email_3, email_4, email_5]
+user_ids = ['58f83a6e', '0d8582e', '7b696b1c']
+emails.select { |email| email.author_type == 'admin' || user_ids.include?(email.user_id) }
 </pre>
 
-<p>If we were using a relational database, this would be easy to accomplish using a join. However, since we are using a non-relational database, we have to be more specific about the data we are looking for.</p>
+<p>If we were using a relational database, we could accomplish this using a <code>join</code>. However, since we are using a non-relational database, we have to be more specific about the data we are looking for.</p>
 
-<h3>Solution:</h3>
+<h3>Solution 1:</h3>
+<pre class="prettyprint lang-ruby">
+# incorrect - don't get stuck here like I did!
+# emails.any_of(author_type: 'admin').any_of(user_id: user_ids)
 
-<pre class="prettyprint lang-ruby">
-</pre>
-<pre class="prettyprint lang-ruby">
-</pre>
-
-<pre class="prettyprint lang-ruby">
-  user_answers = answers.any_of(creator_type: 'User').any_of(creator_id: {'$in' => affiliate_ids})
+# correct
+emails.any_of(author_type: 'admin').any_of(user_id: {'$in' => user_ids})
 </pre>
 
-
-
-<b>Resulting in:</b><br>
+<h4>Result:</h4>
 <pre class="prettyprint lang-bash">
-  <Mongoid::Criteria
-  selector: {"question_id"=>BSON::ObjectId('58f83a6c0d8582e7b696b17f'), "creator_id"=>{"$ne"=>nil, "$nin"=>[]}, "$or"=>[{"creator_type"=>"User"}, {"creator_id"=>{"$in"=>[BSON::ObjectId('58f83a6d0d8582e7b696b1c0'), BSON::ObjectId('58f83a6e0d8582e7b696b1c9'), BSON::ObjectId('58f83a6f0d8582e7b696b1db')]}}], "created_at"=>{"$gte"=>2017-04-26 23:54:05 UTC}}
-  options:  {:sort=>{"creator_type"=>-1, "created_at"=>1}}
-  class:    Answer
-  embedded: false>
+&lt;Mongoid::Criteria
+selector:
+  {"$or"=>
+    [
+      {"author_type"=>"admin"},
+      {"user_id"=>
+        {"$in"=>
+          [ BSON::ObjectId('592fbb93e86cb005d2000003'),
+            BSON::ObjectId('592fbb9ae86cb005d2000004')
+          ]
+        }
+      }
+    ]
+  }
+options:  {}
+class:    Email
+embedded: false&gt;
 </pre>
+<p> Notes and a few "ah-ha's":
+<ol>
+  <li>The Mongoid method <code>any_of</code>, select any instance where the provided requirement is met. For example, within <code>emails</code> select any email where the <code>author_type</code> field is "admin"</li>
+  <li>Mongo selectors are permitted inside of the Mongoid method parameter. For example, <code>$in</code> within the following: <code>any_of(user_id: {'$in' => user_ids}</code> </li>
+  <li>The Mongo <code>"$in"</code> allows us to provide several user ids and select an email(s) where one of the given user ids is found.</li>
+</ol>
 
+<p>Now that we have a working solution, let's try to clean up the repetitive <code>any_of</code> Mongoid method calls.</p>
 
-
-  answers.any_of({creator_type: 'User'},{creator_id: {'$in' => affiliate_ids}})
-    <Mongoid::Criteria
-    selector: {"question_id"=>BSON::ObjectId('58f83a6c0d8582e7b696b17f'), "creator_id"=>{"$ne"=>nil, "$nin"=>[]}, "$or"=>[{"creator_type"=>"User"}, {"creator_id"=>{"$in"=>[BSON::ObjectId('58f83a6d0d8582e7b696b1c0'), BSON::ObjectId('58f83a6e0d8582e7b696b1c9'), BSON::ObjectId('58f83a6f0d8582e7b696b1db')]}}]}
-    options:  {:sort=>{"creator_type"=>-1, "created_at"=>1}}
-    class:    Answer
-    embedded: false>
-
-Works!
-It looks like '$in' is required
-answers.or(creator_type: 'User').or(creator_id: {'$in' => affiliate_ids})
-
-MONGODB | localhost:27017 | health_teams_development.count | STARTED | {"count"=>"answers", "query"=>{"question_id"=>BSON::ObjectId('58f83a6c0d8582e7b696b17f'), "creator_id"=>{"$ne"=>nil, "$nin"=>[]}, "$or"=>[{"creator_type"=>"User"}, {"creator_id"=>{"$in"=>[BSON::ObjectId('58f83a6d0d8582e7b696b1c0'), BSON::ObjectId('58f...
-MONGODB | localhost:27017 | health_teams_development.count | SUCCEEDED | 0.0005520000000000001s
-2
-
-{"count"=>"answers", "query"=>{"question_id"=>BSON::ObjectId('58f83a6c0d8582e7b696b17f'), "creator_id"=>{"$ne"=>nil, "$nin"=>[]}, "$or"=>[{"creator_type"=>"User"}, {"creator_id"=>{"$in"=>[BSON::ObjectId('58f83a6d0d8582e7b696b1c0'), BSON::ObjectId('58f...
-
-
-
-    {"$or"=>[{"username"=>@username}, {"email"=>@email}]}
-
-If you are looking to match any one of an array of elements, then you will need to write a Mongoid query with the Mongo '$in' selector.
-
-For example, you have a specific username and an array of emails. You would like to return results for items in which case either returns true for having at least one matching field:
-
-
-
+<h3>Solution 2:</h3>
 <pre class="prettyprint lang-ruby">
+user_emails = emails.any_of({author_type: 'admin'},{user_id: {'$in' => user_ids}})
 </pre>
+
+<h4>Result:</h4>
+<pre class="prettyprint lang-bash">
+&lt;Mongoid::Criteria
+selector:
+  {"$or"=>
+    [
+      {"author_type"=>"admin"},
+      {"user_id"=>
+        {"$in"=>
+          [ BSON::ObjectId('592fbb93e86cb005d2000003'),
+            BSON::ObjectId('592fbb9ae86cb005d2000004')
+          ]
+        }
+      }
+    ]
+  }
+options:  {}
+class:    Email
+embedded: false&gt;
+</pre>
+
+<p>This is better, but as it turns out, "any_of" is actually old syntax. Let's try Mongoid's "or" method.</p>
+
+<h3>Solution 3:</h3>
 <pre class="prettyprint lang-ruby">
+emails.or({author_type: 'admin'},{user_id: {'$in' => user_ids}})
 </pre>
-<pre class="prettyprint lang-ruby">
+
+<h4>Result:</h4>
+<pre class="prettyprint lang-bash">
+&lt;Mongoid::Criteria
+selector:
+  {"$or"=>
+    [
+      {"author_type"=>"admin"},
+      {"user_id"=>
+        {"$in"=>
+          [
+            BSON::ObjectId('592fbb93e86cb005d2000003'),
+            BSON::ObjectId('592fbb9ae86cb005d2000004')
+          ]
+        }
+      }
+    ]
+  }
+options:  {}
+class:    Email
+embedded: false&gt;
 </pre>
 
-    @emails = ["hi@mail.com", "test@mail.com", "foo@mail.com"]
-    Username.or({username: ""}, {email: {'$in': @emails}})
-    {"$or"=>[{"first_name"=>""}, {"email"=>{:$in=>["hi@mail.com", "test@mail.com", "foo@mail.com"]}}]}
-
-If you have 2 of the 3 emails in your database, then the selector will return a count of 2.
-
-
-
-Now the Mongo selector will resolve to:
-
-@emails = ["adisa@example.com", "anna@example.com", "yuan@example.com"]
-
-answers.or({creator_type: 'User'}, {creator_id: {'$in' => affiliate_ids}})
-
-User.or({first_name: "Adisa"}, {email: "adisa@example.com"})
+<p>Now this looks good! We are using the updated method and have made our code more DRY by only calling "or" one time.</p>
